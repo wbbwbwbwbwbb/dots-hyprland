@@ -27,5 +27,6 @@ if status is-interactive
     if test "$TERM" != "linux"
         alias ls 'eza --icons'
     end
+    fastfetch
     
 end
