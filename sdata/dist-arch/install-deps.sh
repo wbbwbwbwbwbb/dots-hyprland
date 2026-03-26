@@ -54,7 +54,7 @@ v remove_deprecated_dependencies
 # Issue #363
 case $SKIP_SYSUPDATE in
   true) sleep 0;;
-  *) v sudo pacman -Syu;;
+  *) v sudo pacman -Syu --noconfirm;;
 esac
 
 # Use yay. Because paru does not support cleanbuild.
