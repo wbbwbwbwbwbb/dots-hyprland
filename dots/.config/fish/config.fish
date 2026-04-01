@@ -27,6 +27,9 @@ if status is-interactive
     if test "$TERM" != "linux"
         alias ls 'eza --icons'
     end
+    function hyprrebuild
+        pacman -Qq | grep -E '^.*(hypr|aquamarine).*(-git)$' | paru -S - --rebuild --noconfirm
+    end
     fastfetch
     
 end
