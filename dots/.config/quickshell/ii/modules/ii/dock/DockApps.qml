@@ -103,8 +103,6 @@ Item {
             edges: Edges.Top | Edges.Left
         }
 
-        // Keep the Wayland surface mapped as long as the popup is visible or fading,
-        // so bindings and hover state survive between hovers of the same button.
         visible: popupBackground.opacity > 0
         color: "transparent"
         implicitWidth: root.QsWindow.window?.width ?? 1
