@@ -17,6 +17,7 @@ remove_deprecated_dependencies(){
   local list=()
   list+=(illogical-impulse-{microtex,pymyc-aur,oneui4-icons-git})
   list+=(hyprland-qtutils)
+  list+=(quickshell-git)
   list+=(matugen-bin)
   for i in ${list[@]};do try sudo pacman --noconfirm -Rdd $i;done
 }
