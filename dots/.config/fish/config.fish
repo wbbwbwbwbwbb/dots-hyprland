@@ -10,7 +10,6 @@ if status is-interactive
     if test "$TERM" != "linux"
         starship init fish | source
         enable_transience
-        set -g fish_prompt_pwd_dir_length 1
     end
     
     # Colors
@@ -34,5 +33,4 @@ if status is-interactive
     function hyprrebuild
         pacman -Qq | grep -E '^.*(hypr|aquamarine).*(-git)$' | paru -S - --rebuild --noconfirm
     end
-    fastfetch
 end
