@@ -30,7 +30,4 @@ if status is-interactive
     if test "$TERM" = "xterm-kitty"
         alias ssh 'kitten ssh'
     end
-    function hyprrebuild
-        pacman -Qq | grep -E '^.*(hypr|aquamarine).*(-git)$' | paru -S - --rebuild --noconfirm
-    end
 end
