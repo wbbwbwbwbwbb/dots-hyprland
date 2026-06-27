@@ -344,9 +344,6 @@ MouseArea {
             toggled: root.oskShown
             onClicked: root.oskShown = !root.oskShown
             text: "keyboard"
-            StyledToolTip {
-                text: Translation.tr("On-screen keyboard")
-            }
         }
 
         IconToolbarButton {
