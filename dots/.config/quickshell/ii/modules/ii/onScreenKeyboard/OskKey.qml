@@ -7,12 +7,19 @@ import QtQuick.Layouts
 
 RippleButton {
     id: root
+    // Never steal keyboard focus from the focused surface (matters when embedded in the lock screen,
+    // where the password field must keep focus so injected keystrokes land in it)
+    focusPolicy: Qt.NoFocus
     property var keyData
     property string key: keyData.label
     property string type: keyData.keytype
     property var keycode: keyData.keycode
     property string shape: keyData.shape
     property bool isShift: Ydotool.shiftKeys.includes(keycode)
+    // Non-shift modifiers (Ctrl/Alt/Super) behave as sticky one-shot keys
+    property bool isMod: root.type == "modkey" && !isShift
+    // Caps Lock toggles the keyboard's caps-lock state (same as double-tapping Shift)
+    property bool isCaps: root.type == "caps"
     property bool isBackspace: (key.toLowerCase() == "backspace")
     property bool isEnter: (key.toLowerCase() == "enter" || key.toLowerCase() == "return")
     property real baseWidth: 45
@@ -33,7 +40,7 @@ RippleButton {
         "shift": 1,
         "control": 1
     })
-    toggled: isShift ? Ydotool.shiftMode : false
+    toggled: isShift ? Ydotool.shiftMode : (isCaps ? (Ydotool.shiftMode == 2) : (isMod ? Ydotool.armedMods.includes(root.keycode) : false))
 
     enabled: shape != "empty"
     colBackground: shape == "empty" ? ColorUtils.transparentize(Appearance.colors.colLayer1) : Appearance.colors.colLayer1
@@ -68,12 +75,19 @@ RippleButton {
     }
 
     downAction: () => {
+        // Sticky modifiers and Caps Lock are handled on release, not held down here
+        if (root.isMod || root.isCaps) return;
+        if (root.type == "normal" && Ydotool.armedMods.length > 0) return;
         Ydotool.press(root.keycode);
         if (isShift && Ydotool.shiftMode == 0) Ydotool.shiftMode = 1;
     }
     releaseAction: () => {
         if (root.type == "normal") {
-            Ydotool.release(root.keycode);
+            if (Ydotool.armedMods.length > 0) {
+                Ydotool.tapWithMods(root.keycode); // e.g. Super+1, Ctrl+Alt+Del
+            } else {
+                Ydotool.release(root.keycode);
+            }
             if (Ydotool.shiftMode == 1) {
                 Ydotool.releaseShiftKeys()
             }
@@ -91,17 +105,16 @@ RippleButton {
             } else if (Ydotool.shiftMode == 2) {
                 Ydotool.releaseShiftKeys();
             }
-        } else if (root.type == "modkey") {
-            root.toggled = !root.toggled;
-            if (!root.toggled) {
-                if (isShift) {
-                    Ydotool.releaseShiftKeys();
-                } else { 
-                    Ydotool.release(root.keycode);
-                }
+        } else if (root.isCaps) {
+            if (Ydotool.shiftMode == 2) {
+                Ydotool.releaseShiftKeys(); // turn caps lock off (resets shiftMode to 0)
+            } else {
+                if (Ydotool.shiftMode == 0) Ydotool.press(Ydotool.shiftKeys[0]); // hold shift down
+                Ydotool.shiftMode = 2;
             }
+        } else if (root.isMod) {
+            Ydotool.toggleMod(root.keycode); // arm/disarm; never physically held
         }
-
     }
 
     contentItem: StyledText {

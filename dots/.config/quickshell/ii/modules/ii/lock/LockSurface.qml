@@ -9,6 +9,7 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.common.panels.lock
 import qs.modules.ii.bar as Bar
+import qs.modules.ii.onScreenKeyboard as Osk
 import Quickshell
 import Quickshell.Services.SystemTray
 
@@ -18,6 +19,8 @@ MouseArea {
     property bool active: false
     property bool showInputField: active || context.currentText.length > 0
     readonly property bool requirePasswordToPower: Config.options.lock.security.requirePasswordToPower
+    // On-screen keyboard, toggled by the keyboard button below
+    property bool oskShown: false
 
     // Force focus on entry
     function forceFieldFocus() {
@@ -96,13 +99,41 @@ MouseArea {
     //     }
     // }
 
+    // On-screen keyboard, embedded here because the session lock hides normal layer-shell panels
+    Loader {
+        id: lockOskLoader
+        active: root.oskShown
+        visible: active
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            bottom: parent.bottom
+            bottomMargin: 20
+        }
+        scale: root.toolbarScale
+        opacity: root.toolbarOpacity
+        sourceComponent: Rectangle {
+            color: Appearance.colors.colLayer0
+            radius: Appearance.rounding.windowRounding
+            implicitWidth: lockOskContent.implicitWidth + padding * 2
+            implicitHeight: lockOskContent.implicitHeight + padding * 2
+            property real padding: 10
+            // Release any latched modifiers (e.g. Super) when the lock screen goes away,
+            // so nothing stays held down after unlocking
+            Component.onDestruction: Ydotool.releaseAllKeys()
+            Osk.OskContent {
+                id: lockOskContent
+                anchors.centerIn: parent
+            }
+        }
+    }
+
     // Main toolbar: password box
     Toolbar {
         id: mainIsland
         anchors {
             horizontalCenter: parent.horizontalCenter
             bottom: parent.bottom
-            bottomMargin: 20
+            bottomMargin: lockOskLoader.active ? (lockOskLoader.height + 40) : 20
         }
         Behavior on anchors.bottomMargin {
             animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
@@ -306,6 +337,16 @@ MouseArea {
             icon: Battery.isCharging ? "bolt" : "battery_android_full"
             text: Math.round(Battery.percentage * 100)
             color: (Battery.isLow && !Battery.isCharging) ? Appearance.colors.colError : Appearance.colors.colOnSurfaceVariant
+        }
+
+        IconToolbarButton {
+            id: oskButton
+            toggled: root.oskShown
+            onClicked: root.oskShown = !root.oskShown
+            text: "keyboard"
+            StyledToolTip {
+                text: Translation.tr("On-screen keyboard")
+            }
         }
 
         IconToolbarButton {
